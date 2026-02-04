@@ -639,12 +639,10 @@ export class Basecamp implements INodeType {
 					{
 						displayName: 'Assignee Names or IDs',
 						name: 'assignee_ids',
-						type: 'multiOptions',
-						typeOptions: {
-							loadOptionsMethod: 'getPeople',
-						},
-						default: [],
-						description: 'People to assign this to-do to. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+						type: 'string',
+						default: '',
+						placeholder: 'e.g. 37473047,45649372',
+						description: 'Comma-separated list of people IDs to assign this to-do to. You can also use an expression to pass an array.',
 					},
 					{
 						displayName: 'Notify',
@@ -717,12 +715,10 @@ export class Basecamp implements INodeType {
 					{
 						displayName: 'Assignee Names or IDs',
 						name: 'assignee_ids',
-						type: 'multiOptions',
-						typeOptions: {
-							loadOptionsMethod: 'getPeople',
-						},
-						default: [],
-						description: 'People to assign this to-do to. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+						type: 'string',
+						default: '',
+						placeholder: 'e.g. 37473047,45649372',
+						description: 'Comma-separated list of people IDs to assign this to-do to. You can also use an expression to pass an array.',
 					},
 				],
 			},
@@ -3112,6 +3108,38 @@ export class Basecamp implements INodeType {
 							body.starts_on = new Date(body.starts_on as string).toISOString().split('T')[0];
 						}
 
+						// Handle assignee_ids - ensure it's an array of numbers
+						if (body.assignee_ids !== undefined && body.assignee_ids !== '') {
+							let assignees = body.assignee_ids;
+							// If it's a string (from expression or input), try to parse it
+							if (typeof assignees === 'string') {
+								const trimmed = assignees.trim();
+								if (trimmed === '') {
+									delete body.assignee_ids;
+								} else {
+									try {
+										assignees = JSON.parse(trimmed);
+									} catch {
+										// If not JSON, try comma-separated
+										assignees = trimmed.split(',').map((s: string) => s.trim()).filter(Boolean);
+									}
+								}
+							}
+							// Convert to array of numbers
+							if (Array.isArray(assignees)) {
+								const ids = assignees
+									.map((id: any) => typeof id === 'string' ? parseInt(id, 10) : Number(id))
+									.filter((id: number) => !isNaN(id));
+								if (ids.length > 0) {
+									body.assignee_ids = ids;
+								} else {
+									delete body.assignee_ids;
+								}
+							}
+						} else {
+							delete body.assignee_ids;
+						}
+
 						responseData = await basecampApiRequest.call(
 							this,
 							'POST',
@@ -3181,6 +3209,38 @@ export class Basecamp implements INodeType {
 						}
 						if (updateFields.starts_on) {
 							updateFields.starts_on = new Date(updateFields.starts_on as string).toISOString().split('T')[0];
+						}
+
+						// Handle assignee_ids - ensure it's an array of numbers
+						if (updateFields.assignee_ids !== undefined && updateFields.assignee_ids !== '') {
+							let assignees = updateFields.assignee_ids;
+							// If it's a string (from expression or input), try to parse it
+							if (typeof assignees === 'string') {
+								const trimmed = assignees.trim();
+								if (trimmed === '') {
+									delete updateFields.assignee_ids;
+								} else {
+									try {
+										assignees = JSON.parse(trimmed);
+									} catch {
+										// If not JSON, try comma-separated
+										assignees = trimmed.split(',').map((s: string) => s.trim()).filter(Boolean);
+									}
+								}
+							}
+							// Convert to array of numbers
+							if (Array.isArray(assignees)) {
+								const ids = assignees
+									.map((id: any) => typeof id === 'string' ? parseInt(id, 10) : Number(id))
+									.filter((id: number) => !isNaN(id));
+								if (ids.length > 0) {
+									updateFields.assignee_ids = ids;
+								} else {
+									delete updateFields.assignee_ids;
+								}
+							}
+						} else if (updateFields.assignee_ids === '') {
+							delete updateFields.assignee_ids;
 						}
 
 						responseData = await basecampApiRequest.call(

@@ -136,28 +136,47 @@ export async function getAccounts(
 }
 
 /**
- * Get projects for the selected account
+ * Get projects for the selected account (with pagination)
  */
 export async function getProjects(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
 	const accountId = this.getNodeParameter('accountId', 0) as string;
-	const responseData = await basecampApiRequest.call(this, 'GET', '/projects.json', {}, {}, accountId);
-
 	const returnData: INodePropertyOptions[] = [];
 
-	for (const project of responseData) {
-		returnData.push({
-			name: project.name,
-			value: project.id.toString(),
-		});
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const responseData = await basecampApiRequest.call(
+			this,
+			'GET',
+			'/projects.json',
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(responseData) || responseData.length === 0) {
+			hasMore = false;
+		} else {
+			for (const project of responseData) {
+				returnData.push({
+					name: project.name,
+					value: project.id.toString(),
+				});
+			}
+			// Basecamp returns up to 50 items per page
+			hasMore = responseData.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
 }
 
 /**
- * Get todolists for the selected project
+ * Get todolists for the selected project (with pagination)
  */
 export async function getTodolists(
 	this: ILoadOptionsFunctions,
@@ -188,43 +207,74 @@ export async function getTodolists(
 	}
 
 	const todosetId = urlParts[2];
-	const todolists = await basecampApiRequest.call(
-		this,
-		'GET',
-		`/buckets/${projectId}/todosets/${todosetId}/todolists.json`,
-		{},
-		{},
-		accountId,
-	);
-
 	const returnData: INodePropertyOptions[] = [];
 
-	for (const todolist of todolists) {
-		returnData.push({
-			name: todolist.title,
-			value: todolist.id.toString(),
-		});
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const todolists = await basecampApiRequest.call(
+			this,
+			'GET',
+			`/buckets/${projectId}/todosets/${todosetId}/todolists.json`,
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(todolists) || todolists.length === 0) {
+			hasMore = false;
+		} else {
+			for (const todolist of todolists) {
+				returnData.push({
+					name: todolist.title,
+					value: todolist.id.toString(),
+				});
+			}
+			// Basecamp returns up to 50 items per page
+			hasMore = todolists.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
 }
 
 /**
- * Get people in the selected project
+ * Get people in the selected project (with pagination)
  */
 export async function getPeople(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
 	const accountId = this.getNodeParameter('accountId', 0) as string;
-	const responseData = await basecampApiRequest.call(this, 'GET', '/people.json', {}, {}, accountId);
-
 	const returnData: INodePropertyOptions[] = [];
 
-	for (const person of responseData) {
-		returnData.push({
-			name: person.name,
-			value: person.id.toString(),
-		});
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const responseData = await basecampApiRequest.call(
+			this,
+			'GET',
+			'/people.json',
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(responseData) || responseData.length === 0) {
+			hasMore = false;
+		} else {
+			for (const person of responseData) {
+				returnData.push({
+					name: person.name,
+					value: person.id.toString(),
+				});
+			}
+			// Basecamp returns up to 50 items per page
+			hasMore = responseData.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
@@ -295,7 +345,7 @@ export async function getCampfires(
 }
 
 /**
- * Get vaults (folders) for the selected project
+ * Get vaults (folders) for the selected project (with pagination)
  */
 export async function getVaults(
 	this: ILoadOptionsFunctions,
@@ -318,16 +368,6 @@ export async function getVaults(
 		return [];
 	}
 
-	// Get all vaults under the root vault
-	const vaults = await basecampApiRequest.call(
-		this,
-		'GET',
-		`/buckets/${projectId}/vaults/${vault.id}/vaults.json`,
-		{},
-		{},
-		accountId,
-	);
-
 	const returnData: INodePropertyOptions[] = [
 		{
 			name: vault.title || 'Root Vault',
@@ -335,11 +375,32 @@ export async function getVaults(
 		},
 	];
 
-	for (const v of vaults) {
-		returnData.push({
-			name: v.title,
-			value: v.id.toString(),
-		});
+	// Get all vaults under the root vault with pagination
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const vaults = await basecampApiRequest.call(
+			this,
+			'GET',
+			`/buckets/${projectId}/vaults/${vault.id}/vaults.json`,
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(vaults) || vaults.length === 0) {
+			hasMore = false;
+		} else {
+			for (const v of vaults) {
+				returnData.push({
+					name: v.title,
+					value: v.id.toString(),
+				});
+			}
+			hasMore = vaults.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
@@ -410,7 +471,7 @@ export async function getQuestionnaires(
 }
 
 /**
- * Get questions for the selected questionnaire
+ * Get questions for the selected questionnaire (with pagination)
  */
 export async function getQuestions(
 	this: ILoadOptionsFunctions,
@@ -419,22 +480,33 @@ export async function getQuestions(
 	const projectId = this.getNodeParameter('projectId', 0) as string;
 	const questionnaireId = this.getNodeParameter('questionnaireId', 0) as string;
 
-	const questions = await basecampApiRequest.call(
-		this,
-		'GET',
-		`/buckets/${projectId}/questionnaires/${questionnaireId}/questions.json`,
-		{},
-		{},
-		accountId,
-	);
-
 	const returnData: INodePropertyOptions[] = [];
 
-	for (const question of questions) {
-		returnData.push({
-			name: question.title,
-			value: question.id.toString(),
-		});
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const questions = await basecampApiRequest.call(
+			this,
+			'GET',
+			`/buckets/${projectId}/questionnaires/${questionnaireId}/questions.json`,
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(questions) || questions.length === 0) {
+			hasMore = false;
+		} else {
+			for (const question of questions) {
+				returnData.push({
+					name: question.title,
+					value: question.id.toString(),
+				});
+			}
+			hasMore = questions.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
@@ -506,7 +578,7 @@ export async function getCardTableColumns(
 }
 
 /**
- * Get messages for the selected message board
+ * Get messages for the selected message board (with pagination)
  */
 export async function getMessages(
 	this: ILoadOptionsFunctions,
@@ -515,29 +587,40 @@ export async function getMessages(
 	const projectId = this.getNodeParameter('projectId', 0) as string;
 	const messageBoardId = this.getNodeParameter('messageBoardId', 0) as string;
 
-	const messages = await basecampApiRequest.call(
-		this,
-		'GET',
-		`/buckets/${projectId}/message_boards/${messageBoardId}/messages.json`,
-		{},
-		{},
-		accountId,
-	);
-
 	const returnData: INodePropertyOptions[] = [];
 
-	for (const message of messages) {
-		returnData.push({
-			name: message.subject || message.title,
-			value: message.id.toString(),
-		});
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const messages = await basecampApiRequest.call(
+			this,
+			'GET',
+			`/buckets/${projectId}/message_boards/${messageBoardId}/messages.json`,
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(messages) || messages.length === 0) {
+			hasMore = false;
+		} else {
+			for (const message of messages) {
+				returnData.push({
+					name: message.subject || message.title,
+					value: message.id.toString(),
+				});
+			}
+			hasMore = messages.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
 }
 
 /**
- * Get documents for the selected vault
+ * Get documents for the selected vault (with pagination)
  */
 export async function getDocuments(
 	this: ILoadOptionsFunctions,
@@ -546,29 +629,40 @@ export async function getDocuments(
 	const projectId = this.getNodeParameter('projectId', 0) as string;
 	const vaultId = this.getNodeParameter('vaultId', 0) as string;
 
-	const documents = await basecampApiRequest.call(
-		this,
-		'GET',
-		`/buckets/${projectId}/vaults/${vaultId}/documents.json`,
-		{},
-		{},
-		accountId,
-	);
-
 	const returnData: INodePropertyOptions[] = [];
 
-	for (const doc of documents) {
-		returnData.push({
-			name: doc.title,
-			value: doc.id.toString(),
-		});
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const documents = await basecampApiRequest.call(
+			this,
+			'GET',
+			`/buckets/${projectId}/vaults/${vaultId}/documents.json`,
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(documents) || documents.length === 0) {
+			hasMore = false;
+		} else {
+			for (const doc of documents) {
+				returnData.push({
+					name: doc.title,
+					value: doc.id.toString(),
+				});
+			}
+			hasMore = documents.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
 }
 
 /**
- * Get uploads for the selected vault
+ * Get uploads for the selected vault (with pagination)
  */
 export async function getUploads(
 	this: ILoadOptionsFunctions,
@@ -577,22 +671,33 @@ export async function getUploads(
 	const projectId = this.getNodeParameter('projectId', 0) as string;
 	const vaultId = this.getNodeParameter('vaultId', 0) as string;
 
-	const uploads = await basecampApiRequest.call(
-		this,
-		'GET',
-		`/buckets/${projectId}/vaults/${vaultId}/uploads.json`,
-		{},
-		{},
-		accountId,
-	);
-
 	const returnData: INodePropertyOptions[] = [];
 
-	for (const upload of uploads) {
-		returnData.push({
-			name: upload.title || upload.filename,
-			value: upload.id.toString(),
-		});
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const uploads = await basecampApiRequest.call(
+			this,
+			'GET',
+			`/buckets/${projectId}/vaults/${vaultId}/uploads.json`,
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(uploads) || uploads.length === 0) {
+			hasMore = false;
+		} else {
+			for (const upload of uploads) {
+				returnData.push({
+					name: upload.title || upload.filename,
+					value: upload.id.toString(),
+				});
+			}
+			hasMore = uploads.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
@@ -631,7 +736,7 @@ export async function getTodosets(
 }
 
 /**
- * Get webhooks for the selected project
+ * Get webhooks for the selected project (with pagination)
  */
 export async function getWebhooks(
 	this: ILoadOptionsFunctions,
@@ -639,51 +744,73 @@ export async function getWebhooks(
 	const accountId = this.getNodeParameter('accountId', 0) as string;
 	const projectId = this.getNodeParameter('projectId', 0) as string;
 
-	const webhooks = await basecampApiRequest.call(
-		this,
-		'GET',
-		`/buckets/${projectId}/webhooks.json`,
-		{},
-		{},
-		accountId,
-	);
-
 	const returnData: INodePropertyOptions[] = [];
 
-	for (const webhook of webhooks) {
-		returnData.push({
-			name: webhook.payload_url || `Webhook ${webhook.id}`,
-			value: webhook.id.toString(),
-		});
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const webhooks = await basecampApiRequest.call(
+			this,
+			'GET',
+			`/buckets/${projectId}/webhooks.json`,
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(webhooks) || webhooks.length === 0) {
+			hasMore = false;
+		} else {
+			for (const webhook of webhooks) {
+				returnData.push({
+					name: webhook.payload_url || `Webhook ${webhook.id}`,
+					value: webhook.id.toString(),
+				});
+			}
+			hasMore = webhooks.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
 }
 
 /**
- * Get templates for the account
+ * Get templates for the account (with pagination)
  */
 export async function getTemplates(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
 	const accountId = this.getNodeParameter('accountId', 0) as string;
 
-	const templates = await basecampApiRequest.call(
-		this,
-		'GET',
-		'/templates.json',
-		{},
-		{},
-		accountId,
-	);
-
 	const returnData: INodePropertyOptions[] = [];
 
-	for (const template of templates) {
-		returnData.push({
-			name: template.name,
-			value: template.id.toString(),
-		});
+	let page = 1;
+	let hasMore = true;
+
+	while (hasMore) {
+		const templates = await basecampApiRequest.call(
+			this,
+			'GET',
+			'/templates.json',
+			{},
+			{ page },
+			accountId,
+		);
+
+		if (!Array.isArray(templates) || templates.length === 0) {
+			hasMore = false;
+		} else {
+			for (const template of templates) {
+				returnData.push({
+					name: template.name,
+					value: template.id.toString(),
+				});
+			}
+			hasMore = templates.length >= 50;
+			page++;
+		}
 	}
 
 	return returnData;
