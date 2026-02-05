@@ -44,7 +44,7 @@ export async function basecampApiRequest(
 	}
 
 	try {
-		return await this.helpers.httpRequestWithAuthentication.call(
+		return await this.helpers.requestWithAuthentication.call(
 			this,
 			'basecampOAuth2Api',
 			options,
@@ -85,7 +85,7 @@ export async function basecampFetchAllPages(
 			resolveWithFullResponse: true,
 		};
 
-		const res = await this.helpers.httpRequestWithAuthentication.call(
+		const res = await this.helpers.requestWithAuthentication.call(
 			this,
 			'basecampOAuth2Api',
 			options,
