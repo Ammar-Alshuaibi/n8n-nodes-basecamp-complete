@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-basecamp-complete",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "n8n community node for Basecamp 4 API integration - manage projects, to-dos, messages, campfires, cards, documents and more",
   "keywords": [
     "n8n-community-node-package",
