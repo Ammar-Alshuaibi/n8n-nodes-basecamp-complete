@@ -272,7 +272,12 @@ export async function getPeople(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
 	const accountId = this.getNodeParameter('accountId', 0) as string;
-	const people = await basecampFetchAllPages.call(this, '/people.json', accountId);
+	const projectId = this.getNodeParameter('projectId', 0) as string;
+	const people = await basecampFetchAllPages.call(
+		this,
+		`/projects/${projectId}/people.json`,
+		accountId,
+	);
 	const returnData: INodePropertyOptions[] = [];
 	for (const person of people) {
 		returnData.push({ name: person.name, value: person.id.toString() });
