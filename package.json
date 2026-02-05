@@ -12,14 +12,14 @@
     "37signals"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/Ammar-Alshuaibi/n8n-nodes-basecamp",
+  "homepage": "https://github.com/Ammar-Alshuaibi/n8n-nodes-basecamp-complete",
   "author": {
     "name": "Ammar Alshuaibi",
     "email": ""
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Ammar-Alshuaibi/n8n-nodes-basecamp.git"
+    "url": "https://github.com/Ammar-Alshuaibi/n8n-nodes-basecamp-complete.git"
   },
   "main": "dist/index.js",
   "scripts": {
@@ -54,3 +54,4 @@
     "n8n-workflow": "*"
   }
 }
+
