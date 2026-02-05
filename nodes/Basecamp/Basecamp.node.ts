@@ -637,13 +637,17 @@ export class Basecamp implements INodeType {
 						description: 'Start date for the to-do',
 					},
 					{
-						displayName: 'Assignee Names or IDs',
-						name: 'assignee_ids',
-						type: 'string',
-						default: '',
-						placeholder: 'e.g. 37473047,45649372',
-						description: 'Comma-separated list of people IDs to assign this to-do to. You can also use an expression to pass an array.',
-					},
+
+
+                                                displayName: 'Assignee Names or IDs',
+                                                name: 'assignee_ids',
+                                                type: 'multiOptions',
+                                                typeOptions: {
+                                                        loadOptionsMethod: 'getPeople',
+                                                },
+                                                default: [],
+                                                description: 'People to assign this to-do to. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+                                        },
 					{
 						displayName: 'Notify',
 						name: 'notify',
@@ -712,14 +716,18 @@ export class Basecamp implements INodeType {
 						default: '',
 						description: 'New start date for the to-do',
 					},
-					{
-						displayName: 'Assignee Names or IDs',
-						name: 'assignee_ids',
-						type: 'string',
-						default: '',
-						placeholder: 'e.g. 37473047,45649372',
-						description: 'Comma-separated list of people IDs to assign this to-do to. You can also use an expression to pass an array.',
-					},
+
+                                        {
+
+                                                displayName: 'Assignee Names or IDs',
+                                                name: 'assignee_ids',
+                                                type: 'multiOptions',
+                                                typeOptions: {
+                                                        loadOptionsMethod: 'getPeople',
+                                                },
+                                                default: [],
+                                                description: 'People to assign this to-do to. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+                                        },
 				],
 			},
 

@@ -60,6 +60,56 @@ export async function basecampApiRequest(
 	}
 }
 
+
+/**
+ * Follow Link headers to collect all pages
+ */
+export async function basecampFetchAllPages(
+	this: IExecuteFunctions | ILoadOptionsFunctions,
+	endpoint: string,
+	accountId?: string,
+): Promise<any[]> {
+	const account = accountId || (this.getNodeParameter('accountId', 0) as string);
+	const out: any[] = [];
+	let nextUrl: string | undefined = `https://3.basecampapi.com/${account}${endpoint}`;
+
+	while (nextUrl) {
+		const options: any = {
+			headers: {
+				'Content-Type': 'application/json',
+				'User-Agent': 'n8n (https://n8n.io)',
+			},
+			method: 'GET',
+			url: nextUrl,
+			json: true,
+			resolveWithFullResponse: true,
+		};
+
+		const res = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'basecampOAuth2Api',
+			options,
+			{
+				oauth2: {
+					includeCredentialsOnRefreshOnBody: true,
+				},
+			},
+		);
+
+		const body = res.body;
+
+		if (Array.isArray(body)) {
+			out.push(...body);
+		}
+
+		const link = res.headers && (res.headers.link || res.headers.Link);
+		const m = link && /<([^>]+)>;\s*rel="next"/.exec(link);
+		nextUrl = m && m[1] ? m[1] : undefined;
+	}
+
+	return out;
+}
+
 /**
  * Make an API request to Basecamp and return all items
  */
@@ -139,40 +189,15 @@ export async function getAccounts(
  * Get projects for the selected account (with pagination)
  */
 export async function getProjects(
-	this: ILoadOptionsFunctions,
+        this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-	const accountId = this.getNodeParameter('accountId', 0) as string;
-	const returnData: INodePropertyOptions[] = [];
-
-	let page = 1;
-	let hasMore = true;
-
-	while (hasMore) {
-		const responseData = await basecampApiRequest.call(
-			this,
-			'GET',
-			'/projects.json',
-			{},
-			{ page },
-			accountId,
-		);
-
-		if (!Array.isArray(responseData) || responseData.length === 0) {
-			hasMore = false;
-		} else {
-			for (const project of responseData) {
-				returnData.push({
-					name: project.name,
-					value: project.id.toString(),
-				});
-			}
-			// Basecamp returns up to 50 items per page
-			hasMore = responseData.length >= 50;
-			page++;
-		}
-	}
-
-	return returnData;
+        const accountId = this.getNodeParameter('accountId', 0) as string;
+        const projects = await basecampFetchAllPages.call(this, '/projects.json', accountId);
+        const returnData: INodePropertyOptions[] = [];
+        for (const project of projects) {
+                returnData.push({ name: project.name, value: project.id.toString() });
+        }
+        return returnData;
 }
 
 /**
@@ -247,36 +272,11 @@ export async function getPeople(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
 	const accountId = this.getNodeParameter('accountId', 0) as string;
+	const people = await basecampFetchAllPages.call(this, '/people.json', accountId);
 	const returnData: INodePropertyOptions[] = [];
-
-	let page = 1;
-	let hasMore = true;
-
-	while (hasMore) {
-		const responseData = await basecampApiRequest.call(
-			this,
-			'GET',
-			'/people.json',
-			{},
-			{ page },
-			accountId,
-		);
-
-		if (!Array.isArray(responseData) || responseData.length === 0) {
-			hasMore = false;
-		} else {
-			for (const person of responseData) {
-				returnData.push({
-					name: person.name,
-					value: person.id.toString(),
-				});
-			}
-			// Basecamp returns up to 50 items per page
-			hasMore = responseData.length >= 50;
-			page++;
-		}
+	for (const person of people) {
+		returnData.push({ name: person.name, value: person.id.toString() });
 	}
-
 	return returnData;
 }
 
@@ -586,36 +586,18 @@ export async function getMessages(
 	const accountId = this.getNodeParameter('accountId', 0) as string;
 	const projectId = this.getNodeParameter('projectId', 0) as string;
 	const messageBoardId = this.getNodeParameter('messageBoardId', 0) as string;
-
+	const messages = await basecampFetchAllPages.call(
+		this,
+		`/buckets/${projectId}/message_boards/${messageBoardId}/messages.json`,
+		accountId,
+	);
 	const returnData: INodePropertyOptions[] = [];
-
-	let page = 1;
-	let hasMore = true;
-
-	while (hasMore) {
-		const messages = await basecampApiRequest.call(
-			this,
-			'GET',
-			`/buckets/${projectId}/message_boards/${messageBoardId}/messages.json`,
-			{},
-			{ page },
-			accountId,
-		);
-
-		if (!Array.isArray(messages) || messages.length === 0) {
-			hasMore = false;
-		} else {
-			for (const message of messages) {
-				returnData.push({
-					name: message.subject || message.title,
-					value: message.id.toString(),
-				});
-			}
-			hasMore = messages.length >= 50;
-			page++;
-		}
+	for (const message of messages) {
+		returnData.push({
+			name: message.subject || message.title,
+			value: message.id.toString(),
+		});
 	}
-
 	return returnData;
 }
 

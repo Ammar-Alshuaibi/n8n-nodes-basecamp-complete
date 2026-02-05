@@ -4,7 +4,9 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es2019",
-    "lib": ["es2019"],
+    "lib": [
+      "es2019"
+    ],
     "declaration": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
@@ -15,7 +17,8 @@
   },
   "include": [
     "credentials/**/*.ts",
-    "nodes/**/*.ts"
+    "nodes/**/*.ts",
+    "index.ts"
   ],
   "exclude": [
     "node_modules/**"
