@@ -1,8 +1,14 @@
 {
-  "name": "n8n-nodes-ai-orchestrator",
+  "name": "codex",
   "version": "0.1.0",
   "description": "n8n community node for deterministic multi-provider AI routing and reliability",
   "license": "MIT",
+  "author": "Ammar Alshuaibi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ammar-Alshuaibi/n8n-nodes-basecamp-complete.git",
+    "directory": "."
+  },
   "keywords": [
     "n8n-community-node-package",
     "n8n",
