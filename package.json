@@ -1,0 +1,48 @@
+{
+  "name": "n8n-nodes-ai-orchestrator",
+  "version": "0.1.0",
+  "description": "n8n community node for deterministic multi-provider AI routing and reliability",
+  "license": "MIT",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "ai",
+    "openai",
+    "anthropic",
+    "gemini"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && mkdir -p dist/nodes/AIOrchestrator && cp src/nodes/AIOrchestrator/ai-orchestrator.svg dist/nodes/AIOrchestrator/ai-orchestrator.svg",
+    "clean": "rm -rf dist"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/AiOrchestratorApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/AIOrchestrator/AIOrchestrator.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.71",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "n8n-workflow": "^1.87.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
+  "optionalDependencies": {
+    "ioredis": "^5.7.0",
+    "pg": "^8.16.3",
+    "sqlite3": "^5.1.7"
+  }
+}
